@@ -1,6 +1,6 @@
 node_modules/
 .idea
-src/main/static/map_service.js
+src/main/static/dist/**
 pass.txt
 .env
 

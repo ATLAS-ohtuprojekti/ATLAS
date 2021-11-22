@@ -62,7 +62,7 @@ app.get('/api/birds', birds.getAll())
 app.get('/api/species', birds.getAllAtlas3DataBySpecies())
 app.get('/api/species/data', birds.getGridAndBreedingdataForBird())
 
-app.compileMapServiceForDelivery = function() {
+app.compileMapBundle = function() {
   const requireRegEx = /^\s*const\s[{\s\w\d,_$}]+\s*=\s*require\(.*?\).*\n/gm
   const moduleExportsRegEx = /module\.exports\s*=\s*[{\s\w\d,_$}]+.+(\n|$)/gm
   try {
@@ -78,11 +78,11 @@ app.compileMapServiceForDelivery = function() {
   }
 }
 
-const compiledMapService = app.compileMapServiceForDelivery()
+const mapBundle = app.compileMapBundle()
 
-fs.writeFile(__dirname + '/static/map_service.js', compiledMapService, (err) => {
+fs.writeFile(__dirname + '/static/dist/map_bundle.js', mapBundle, (err) => {
   if (err) console.error(err)
-  else console.log('Map service successfully compiled for delivery')
+  else console.log('Map bundle successfully compiled for distribution')
 })
 
 module.exports = app

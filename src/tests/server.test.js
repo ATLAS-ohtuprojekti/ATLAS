@@ -52,13 +52,14 @@ describe('Bird species API', () => {
   })
 })
 
-describe('Map service compiles correctly', () => {
-  test('Map service can be run on a website', async () => {
-    const compiledMapService = app.compileMapServiceForDelivery()
+describe('Map bundle compiles correctly', () => {
+  test('Map bundle can be run on a website', async () => {
+    const compiledMapService = app.compileMapBundle()
     const page = await browser.newPage()
     const html = '<!DOCTYPE html><head><title></title></head><body></body></html>'
     await page.setContent(html)
     await page.evaluate(compiledMapService)
     await page.evaluate(() => MapService())
+    await page.evaluate(() => SvgImage())
   })
 })
