@@ -1,22 +1,42 @@
 const SvgImage = require('../main/domain/maps/svg_image')
+const fs = require("fs")
+const path = require("path")
+const requireRegEx = /^\s*const\s[{\s\w\d,_$}]+\s*=\s*require\(.*?\).*\n/gm
+const moduleExportsRegEx = /module\.exports\s*=\s*[{\s\w\d,_$}]+.+(\n|$)/gm
+const svgImageFile = fs.readFileSync(path.resolve(__dirname, '../main/domain/maps/svg_image.js'), 'utf8')
+    .replace(requireRegEx, '')
+    .replace(moduleExportsRegEx, '')
+let svgImage, page
 
-let svgImage
-
-beforeEach(() => {
+beforeEach(async () => {
   svgImage = new SvgImage()
   svgImage.setDimensions(10, 20)
+  page = await browser.newPage()
+  await page.evaluate(svgImageFile)
 })
 
-test('An empty svg image is created', () => {
-  const svg = new SvgImage()
-  expect(svg.serialize()).toEqual('<svg xmlns="http://www.w3.org/2000/svg"/>')
+describe('An empty svg image is created', () => {
+  test('node',  () => verify(SvgImage().serialize()))
+  test('browser', async () => {
+    svgString = await page.evaluate(() => Promise.resolve(SvgImage().serialize()))
+    verify(svgString)
+  })
+  function verify(svgString) {
+    expect(svgString).toEqual('<svg xmlns="http://www.w3.org/2000/svg"/>')
+  }
 })
 
-test('setDimensions sets correct width', () => {
-  svgImage.setDimensions(200, 300)
-  const svg = svgImage.serialize()
-  expect(svg).toMatch(/^<svg.+\/>$/)
-  expect(svg).toContain('width="200"')
+describe('setDimensions sets correct width', () => {
+  test('node',  () => verify(SvgImage().setDimensions(200, 300).serialize()))
+  test('browser', async () => {
+    svgString = await page.evaluate(() =>
+        Promise.resolve(SvgImage().setDimensions(200, 300).serialize()))
+    verify(svgString)
+  })
+  function verify(svgString) {
+    expect(svgString).toMatch(/^<svg.+\/>$/)
+    expect(svgString).toContain('width="200"')
+  }
 })
 
 test('setDimensions sets correct height', () => {
