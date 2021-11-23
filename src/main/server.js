@@ -50,7 +50,12 @@ app.readBaseMapFiles = function() {
 gridDao.getAllGrids().then((gridArray) => {
   gridArray = gridArray.map((rect) => ({...rect, n: rect.coordinateN, e: rect.coordinateE}))
   const geoJsonArray = app.readBaseMapFiles()
-  const mapService = MapService(createAtlasMap(gridArray, geoJsonArray))
+  const atlasMap = createAtlasMap(gridArray, geoJsonArray)
+  app.get('/api/grid/map', (req, res) => {
+    res.setHeader('Content-Type', 'image/svg+xml')
+    res.send(atlasMap.serialize())
+  })
+  const mapService = MapService(atlasMap)
   const grid = new Grid(gridDao, mapService, birdGridDao, birdDao)
 
   app.get('/api/grid/map/data', grid.createGridForBirdData())
