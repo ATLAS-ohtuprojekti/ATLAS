@@ -34,7 +34,7 @@ class Grid {
             res.setHeader('Content-Type', 'image/svg+xml')
             res.send(this.#mapService.getSpeciesMap(
                 data, species, undefined, 'svg', req.param('scaling'), req.param('language'),
-            ))
+            ).serialize())
           }
         })
       })

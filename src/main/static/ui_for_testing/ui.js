@@ -1,6 +1,7 @@
 (function () {
     O = Object, doc = document
     const atlasMap = AtlasMap()
+    const getMapService = GetMapService(atlasMap)
 
     window.onload = function () {
         renderBirdList()
@@ -12,12 +13,15 @@
         const birdTable = doc.getElementById('bird-table')
         const rows = createTableRows(json, getColumnModel(birdTable, "data-col"))
         const atlasMapSvgImage = await atlasMap.getSvgImage()
-        const leafletMap = initLeafletMap(atlasMapSvgImage)
-        const changeMapData = () => atlasMapSvgImage.getSvgElement().querySelectorAll("circle").forEach(e => {
-            const randomColor = Math.floor(Math.random()*16777215).toString(16)
-            e.setAttribute('style', 'fill:#' + randomColor)
-            e.setAttribute('display', 'block')
-        })
+        const leafletSvgImage = atlasMapSvgImage.copy()
+        const leafletMap = initLeafletMap(leafletSvgImage)
+        const changeMapData = async (event) => {
+            const id = event.currentTarget.getAttribute("id").split(".")[1]
+            const json = await (await fetch( "/api/species/data?id=" + id)).json()
+            const speciesMap = (await getMapService()).getSpeciesMap(json)
+            leafletSvgImage.getSvgElement().getElementById("overlay")
+                .replaceWith(speciesMap.getElementById("overlay"))
+        }
         rows.forEach(row => row.addEventListener('click', changeMapData))
         const fragment = rows.reduce((fragment, row) =>
             fragment.appendChild(row).parentNode, doc.createDocumentFragment())
@@ -31,6 +35,12 @@
         const fetchAtlasMapSvgImage = async () =>
             atlasMap = SvgImage(await (await fetch("/api/grid/map")).text())
         return {getSvgImage}
+    }
+
+    function GetMapService(atlasMap) {
+        let mapService
+        return async () => typeof mapService === 'undefined' ?
+            mapService = MapService(await atlasMap.getSvgImage()) : mapService
     }
 
     function initLeafletMap(atlasMapSvgImage) {
@@ -55,8 +65,10 @@
               reorderProps = model => object => O.assign({}, model, object),
               removeExtraProps = model => object => object.slice(0, O.entries(model).length),
               toForm = model => pipe(reorderProps(model), O.entries, removeExtraProps(model), O.fromEntries)
-        return data.map(toForm(columnModel))
-                .map(object => O.values(object).map(toCell).reduce(toRow, doc.createElement('tr')))
+        const rows = data.map(toForm(columnModel))
+            .map(object => O.values(object).map(toCell).reduce(toRow, doc.createElement('tr')))
+        rows.forEach((row, i) => row.setAttribute('id', data[i].species_id))
+        return rows
     }
 
     function pipe(...functions) {
