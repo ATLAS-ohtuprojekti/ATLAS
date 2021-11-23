@@ -6,11 +6,23 @@
     }
 
     async function renderBirdList() {
+        const leafletMap = await initLeafletMap()
         const response = await fetch("/api/birds")
         const json = await response.json()
         const birdTable = doc.getElementById('bird-table')
         const contents = createTableContents(json, getColumnModel(birdTable, "data-col"))
         birdTable.getElementsByTagName("tbody")[0].appendChild(contents)
+    }
+
+    async function initLeafletMap() {
+        const mapResponse = await fetch("/api/grid/map")
+        atlasMapSvgImage = SvgImage(await mapResponse.text())
+        mapService = MapService(atlasMapSvgImage)
+        const leafletMap = L.map('atlas-map', {crs: L.CRS.Simple})
+        const bounds = [[0, 0], [atlasMapSvgImage.getHeight(), atlasMapSvgImage.getWidth()]]
+        L.svgOverlay(atlasMapSvgImage.getSvgElement(), bounds).addTo(leafletMap)
+        leafletMap.fitBounds(bounds)
+        return leafletMap
     }
 
     function getColumnModel(table, dataColumnAttribute) {
