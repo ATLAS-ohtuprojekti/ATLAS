@@ -1,0 +1,11 @@
+.table-container {
+    overflow: auto
+}
+#atlas-table tbody tr:hover {
+    background-color: rgb(236, 236, 236);
+    cursor: pointer;
+    overflow: auto;
+}
+#atlas-map {
+    height: 600px;
+}
