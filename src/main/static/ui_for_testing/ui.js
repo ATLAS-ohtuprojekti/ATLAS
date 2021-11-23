@@ -1,25 +1,33 @@
 (function () {
     O = Object, doc = document
 
-    window.onload = async function () {
-        const atlasMap = L.map('atlas-map').setView([65.3, 27], 5)
-        const response = await fetch("/api/birds")
-        const json = await response.json()
-        const headerCells = doc.getElementById("bird-table").querySelectorAll("[data-col]")
-        const toAttributeTextMap = attributeName => nodeList => nodeList.reduce((map, node) =>
-            map.set(node.attributes[attributeName].value, node.textContent), new Map())
-        const toHeaderModel = pipe(Array.from, toAttributeTextMap("data-col"), Object.fromEntries)
-        const contents = createTableContents(json, toHeaderModel(headerCells))
-        doc.getElementById('bird-table').getElementsByTagName("tbody")[0].appendChild(contents)
+    window.onload = function () {
+        renderBirdList()
     }
 
-    function createTableContents(data, headerModel) {
+    async function renderBirdList() {
+        const response = await fetch("/api/birds")
+        const json = await response.json()
+        const birdTable = doc.getElementById('bird-table')
+        const contents = createTableContents(json, getColumnModel(birdTable, "data-col"))
+        birdTable.getElementsByTagName("tbody")[0].appendChild(contents)
+    }
+
+    function getColumnModel(table, dataColumnAttribute) {
+        const headerCells = table.querySelectorAll(`[${dataColumnAttribute}]`)
+        const toAttributeTextMap = attributeName => nodeList => nodeList.reduce((map, node) =>
+            map.set(node.attributes[attributeName].value, node.textContent), new Map())
+        const toModel = pipe(Array.from, toAttributeTextMap(dataColumnAttribute), Object.fromEntries)
+        return toModel(headerCells)
+    }
+
+    function createTableContents(data, columnModel) {
         const toCell = text => O.assign(doc.createElement('td'), {textContent: text}),
               toRow = (row, cell) => row.appendChild(cell).parentElement,
               reorderProps = model => object => O.assign({}, model, object),
               removeExtraProps = model => object => object.slice(0, O.entries(model).length),
               toForm = model => pipe(reorderProps(model), O.entries, removeExtraProps(model), O.fromEntries)
-        return data.map(toForm(headerModel))
+        return data.map(toForm(columnModel))
                 .map(object => O.values(object).map(toCell).reduce(toRow, doc.createElement('tr')))
                 .reduce((fragment, row) => fragment.appendChild(row).parentNode, doc.createDocumentFragment())
     }
